@@ -11,6 +11,6 @@ Remi2Do technology:
 2. React js
 3. Postgresql db
 4. Github
-
-Updated 26 June 2020
+5. .Net Core
+6. Hangfire
 
