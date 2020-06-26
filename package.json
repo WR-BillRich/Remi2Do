@@ -1,0 +1,29 @@
+{
+  "name": "remi2do",
+  "version": "1.0.0",
+  "description": "to do app and reminder with whatsapp",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WR-BillRich/Remi2Do.git"
+  },
+  "keywords": [
+    "ToDo"
+  ],
+  "author": "William Rich",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WR-BillRich/Remi2Do/issues"
+  },
+  "homepage": "https://github.com/WR-BillRich/Remi2Do#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "pg": "^8.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}
