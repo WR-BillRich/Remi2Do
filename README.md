@@ -12,3 +12,5 @@ Remi2Do technology:
 3. Postgresql db
 4. Github
 
+Updated 26 June 2020
+
