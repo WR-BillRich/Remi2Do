@@ -56,6 +56,73 @@ app.get('/api/v1/pic', async (req, res) => {
     }
 });
 
+app.get('/api/v1/overdue-task', async (req, res) => {
+    try {
+        const query = {
+            text:   "SELECT task_id, task_title, task_desc, created_date, overdue_date, assigned_to, color " +
+                    "FROM 	TRTask " +
+                    "WHERE	overdue_date < NOW()" +
+                    "       AND completed_date IS NULL" + 
+                    "       AND completed_by IS NULL" +
+                    "       AND isActive = 1" + 
+                    "ORDER BY created_date DESC "
+        }       
+        const result = await client.query(query);
+        console.log('Overdue task');
+        console.log(result.rows);
+        res.json(result.rows);
+    } catch (err) {
+        console.log(err);
+        res.status(500);
+        throw err;
+    }
+});
+
+app.get('/api/v1/pending-task', async (req, res) => {
+    try {
+        const query = {
+            text:   "SELECT task_id, task_title, task_desc, cast(created_date as timestamp), cast(overdue_date as timestamp), assigned_to, color " +
+                    "FROM 	TRTask " +
+                    "WHERE	overdue_date > NOW()" +
+                    "       AND completed_date IS NULL" + 
+                    "       AND completed_by IS NULL" +
+                    "       AND isActive = 1 " + 
+                    "ORDER BY created_date DESC "
+        }       
+        const result = await client.query(query);
+        result['rows'].forEach(task => {
+            task.is_collapse = true;
+        });
+        console.log('Pending Task');
+        console.log(result.rows);
+        res.json(result.rows);
+    } catch (err) {
+        console.log(err);
+        res.status(500);
+        throw err;
+    }
+});
+
+app.get('/api/v1/completed-task', async (req, res) => {
+    try {
+        const query = {
+            text:   "SELECT task_id, task_title, task_desc, cast(created_date as timestamp), cast(completed_date as timestamp), assigned_to, color " +
+                    "FROM 	TRTask " +
+                    "WHERE	completed_date IS NOT NULL " +
+                            "AND completed_by IS NOT NULL " + 
+                    "ORDER BY created_date DESC "
+        }       
+        const result = await client.query(query);
+        console.log('Completed Task');
+        console.log(result.rows);
+        res.json(result.rows);
+    } catch (err) {
+        console.log(err);
+        res.status(500);
+        throw err;
+    }
+});
+
 app.post('/api/v1/task', async (req, res) => {
     try{
         const queryText =   "INSERT INTO TRTask (TASK_ID, TASK_TITLE, TASK_DESC, ISACTIVE, CREATED_DATE, CREATED_BY, ASSIGNED_TO, OVERDUE_DATE, COMPLETED_DATE, COMPLETED_BY)" +
@@ -80,6 +147,37 @@ app.post('/api/v1/task', async (req, res) => {
         res.send(
             {
                 "message": "Task Add Fail",
+                "error": err
+            });
+        throw err;
+    }
+});
+
+app.post('api/v1/task-complete/:taskId/username/:username', async(req, res) => {
+    try {
+        const queryText =  `UPDATE  TRTask
+                            SET     COMPLETED_DATE = NOW()
+                                    COMPLETED_BY = $1
+                            WHERE   TASK_ID = $2`;
+        const query = {
+            text: queryText,
+            values: [req.params.username,
+                    req.params.taskId]
+        }
+
+        const result = await client.query(query);
+        console.log('complete task: ', req.params.taskId);
+        res.status(201);
+        res.send({
+            "message":"Task completed",
+            "taskId": req.params.taskId
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500);
+        res.send(
+            {
+                "message": "Complete Task Fail",
                 "error": err
             });
         throw err;

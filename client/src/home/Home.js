@@ -7,24 +7,21 @@ class Home extends React.Component{
         super(props);
         this.state = {
             isLoaded: false,
-            picList: [],
             isManager: 1,
-            error: null
+            error: null,
+            refresh: false
         };
+        this.handleRefresh = this.handleRefresh.bind(this);
     }
 
     componentDidMount(){
-        const picFetch = fetch('http://localhost:4000/api/v1/pic');
-        picFetch
-            .then(res => {return res.json()})
-            .then(result => {
-                //console.log(result);
-                this.setState({
-                    isLoaded: true,
-                    picList : result
-                });
-            }
-            ).catch(error => console.log(error));   
+          
+    }
+
+    handleRefresh() {
+        this.setState({
+            refresh: !this.state.refresh
+        });
     }
 
     render() {
@@ -42,10 +39,10 @@ class Home extends React.Component{
                         <Summary />
                         <hr/>
                         <Task 
-                           picList      = {this.state.picList}
-                           isManager    = {this.state.isManager} 
+                           isManager = {this.state.isManager} 
+                           handleRefresh = {this.handleRefresh}
                         />
-                        <ul className="nav nav-pills nav-fill justify-content-between" id="myTab" role="tablist">
+                        <ul className="nav nav-tabs nav-fill justify-content-between" id="myTab" role="tablist">
                             <li className="nav-item">
                                 <a className="nav-link active" id="pending-tab" data-toggle="tab" href="#pending" role="tab" aria-controls="pending" aria-selected="true">Pending</a>
                             </li>
@@ -59,13 +56,13 @@ class Home extends React.Component{
                         
                         <div className="tab-content" id="myTabContent">
                         <div className="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
-                            <PendingTab />
+                            <PendingTab refresh={this.state.refresh} />
                         </div>
                         <div className="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
-                            <CompletedTab />
+                            <CompletedTab refresh={this.state.refresh} />
                         </div>
                         <div className="tab-pane fade" id="overdue" role="tabpanel" aria-labelledby="overdue-tab">
-                            <OverdueTab />
+                            <OverdueTab refresh={this.state.refresh} />
                         </div>
                         </div>
                     </div>
@@ -126,14 +123,81 @@ class CompletedTab extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-          taskList: []
+            isLoaded: false,
+            taskList: []
         };
     }
 
+    componentWillReceiveProps(props) {
+        const {refresh} = this.props;
+        if (props.refresh !== refresh) {
+            this.componentDidMount();
+        }
+    }
+
+    componentDidMount(){
+        fetch('http://localhost:4000/api/v1/completed-task')
+        .then(res => res.json())
+        .then(result => {
+            this.setState({
+                isLoaded: true,
+                taskList: result
+            });
+        });
+    }
+
     render() {
+        const completedList = this.state.taskList.map(task => {
+            let cardStyle = "card ";
+            if(task.color !== 'bg-light'){
+                cardStyle += "text-white ";
+                cardStyle += task.color;
+            } else {
+                cardStyle += task.color;
+            }
+
+            const contentId = "content" + task.task_id;
+            const target = "#" + contentId;
+            
+            const createdDate = new Date(task.created_date);
+            const completedDate = new Date(task.completed_date);
+
+            return (
+                <a data-toggle="collapse" data-target={target}>
+                    <div className={cardStyle} style={{"marginBottom":"1rem"}}>
+                        <div className="card-body">
+                            <div className="card-title">
+                                <div className="row">
+                                    <div className="col">
+                                        <span><b>{task.task_title}</b></span>
+                                    </div>
+                                </div>   
+                            </div>
+                            <div className="card-subtitle text-muted">
+                                <h6>completed at {completedDate.toDateString()}</h6>
+                                
+                                
+                            </div>
+                            <div id={contentId} className="collapse">
+                                <span   className="card-text"
+                                        style={{"whiteSpace":"pre-line"}}
+                                >
+                                    {task.task_desc}
+                                </span>
+                                <div class="text-right text-muted">
+                                    <h6>created at {createdDate.toDateString()}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            )
+        });
+
         return (
             <div>
-                Completed tab
+                <br/>
+                {completedList}
             </div>
         );
     };
@@ -143,14 +207,86 @@ class OverdueTab extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-          taskList: []
+            isLoaded: false,
+            taskList: []
         };
     }
 
+    componentWillReceiveProps(props) {
+        const {refresh} = this.props;
+        if (props.refresh !== refresh) {
+            this.componentDidMount();
+        }
+    }
+
+    componentDidMount(){
+        fetch('http://localhost:4000/api/v1/overdue-task')
+        .then(res => res.json())
+        .then(result => {
+            this.setState({
+                isLoaded: true,
+                taskList: result
+            });
+        });
+    }
+
     render() {
+        const overdueList = this.state.taskList.map(task => {
+            let cardStyle = "card ";
+            if(task.color !== 'bg-light'){
+                cardStyle += "text-white ";
+                cardStyle += task.color;
+            } else {
+                cardStyle += task.color;
+            }
+
+            const contentId = "content" + task.task_id;
+            const target = "#" + contentId;
+            
+            const createdDate = new Date(task.created_date);
+            const overdueDate = new Date(task.overdue_date);
+
+            return (
+                <a data-toggle="collapse" data-target={target}>
+                    <div className={cardStyle} style={{"marginBottom":"1rem"}}>
+                        <div className="card-body">
+                            <div className="card-title">
+                                <div className="row">
+                                    <div className="col">
+                                        <span><b>{task.task_title}</b></span>
+                                    </div>
+                                    <div className="col ">
+                                        <a title="Mark as complete">
+                                            <i  class="far fa-circle float-right" 
+                                                style={{"fontSize":"1.5rem"}}>
+                                            </i>
+                                        </a>
+                                    </div>
+                                </div>   
+                            </div>
+                            <div className="card-subtitle text-muted">
+                                <h6>overdue at {overdueDate.toDateString()}</h6>
+                            </div>
+                            <div id={contentId} className="collapse">
+                                <span   className="card-text"
+                                        style={{"whiteSpace":"pre-line"}}
+                                >
+                                    {task.task_desc}
+                                </span>
+                                <div class="text-right text-muted">
+                                    <h6>created at {createdDate.toDateString()}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            )
+        });
+
         return (
             <div>
-                Overdue tab
+                <br/>
+                {overdueList}
             </div>
         );
     };
@@ -163,11 +299,87 @@ class PendingTab extends React.Component {
           taskList: []
         };
     }
+    
+    componentWillReceiveProps(props) {
+        const {refresh} = this.props;
+        if (props.refresh !== refresh) {
+            this.componentDidMount();
+        }
+    }
+
+    componentDidMount(){
+        const url = 'http://localhost:4000/api/v1/pending-task';
+        fetch(url)
+        .then(res => res.json())
+        .then(response => 
+            this.setState({
+                taskList: response
+            })
+        )
+    }
 
     render() {
+        console.log('Pending tasks: \n');
+        console.log( this.state.taskList);
+
+        const pendingList = this.state.taskList.map(task => {
+            let cardStyle = "card ";
+            if(task.color !== 'bg-light'){
+                cardStyle += "text-white ";
+                cardStyle += task.color;
+            } else {
+                cardStyle += task.color;
+            }
+        
+            const contentId = "content" + task.task_id;
+            const target = "#" + contentId;
+            
+            const createdDate = new Date(task.created_date);
+            const overdueDate = new Date(task.overdue_date);
+
+            return (
+                <a data-toggle="collapse" data-target={target}>
+                    <div className={cardStyle} style={{"marginBottom":"1rem"}}>
+                        <div className="card-body">
+                            <div className="card-title">
+                                <div className="row">
+                                    <div className="col">
+                                        <span><b>{task.task_title}</b></span>
+                                    </div>
+                                    <div className="col ">
+                                        <a title="Mark as complete">
+                                            <i  class="far fa-circle float-right" 
+                                                style={{"fontSize":"1.5rem"}}>
+                                            </i>
+                                        </a>
+                                    </div>
+                                </div>   
+                            </div>
+                            <div className="card-subtitle text-muted">
+                                <h6>overdue {overdueDate.toDateString()}</h6>
+                                
+                                
+                            </div>
+                            <div id={contentId} className="collapse">
+                                <span   className="card-text"
+                                        style={{"whiteSpace":"pre-line"}}
+                                >
+                                    {task.task_desc}
+                                </span>
+                                <div class="text-right text-muted">
+                                    <h6>created {createdDate.toDateString()}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            )
+        });
+
         return (
             <div>
-                Pending tab
+                <br/>
+                {pendingList}
             </div>
         );
     };
@@ -183,7 +395,9 @@ class Task extends React.Component{
             title           : "",
             desc            : "",
             assignTo        : "",
-            overdueDate     : ""
+            overdueDate     : "",
+            isLoaded        : false,
+            picList         : []
         };
         this.collapseClick          = this.collapseClick.bind(this);
         this.handleSubmit           = this.handleSubmit.bind(this);
@@ -193,16 +407,21 @@ class Task extends React.Component{
         this.handleTitleChange      = this.handleTitleChange.bind(this);
     }
 
-    collapseClick(){
-        console.log("before:",this.state.isCollapse);
-        this.setState({
-            isCollapse: !this.state.isCollapse
-        });
-        console.log("after:",this.state.isCollapse);
-    }
+    
 
     componentDidMount(){
         console.log("Task mounted");
+        const picFetch = fetch('http://localhost:4000/api/v1/pic');
+        picFetch
+            .then(res => {return res.json()})
+            .then(result => {
+                //console.log(result);
+                this.setState({
+                    isLoaded: true,
+                    picList : result
+                });
+            }
+            ).catch(error => console.log(error)); 
     }
 
     handleSubmit(e){
@@ -226,14 +445,25 @@ class Task extends React.Component{
                 title           : "",
                 desc            : "",
                 assignTo        : "",
-                overdueDate     : ""
+                overdueDate     : "",
+                isLoaded        : false,
+                picList         : []
             });
             document.getElementById("formTask").reset();
+            this.props.handleRefresh();
         })
         .catch(error => {
             alert("Add Fail");
             console.error(error);
         });
+    }
+
+    collapseClick(){
+        console.log("before:",this.state.isCollapse);
+        this.setState({
+            isCollapse: !this.state.isCollapse
+        });
+        console.log("after:",this.state.isCollapse);
     }
 
     handleTitleChange(e){
@@ -269,7 +499,7 @@ class Task extends React.Component{
     }
 
     render() {        
-        const options = this.props.picList.map((pic) => {
+        const options = this.state.picList.map((pic) => {
             return ({
                 "value": pic.username,
                 "label": pic.full_name
@@ -356,7 +586,6 @@ class Task extends React.Component{
                                 <br/>
                             </form>
                         </div>
-                        <hr/>
                     </div>
                 );
         } else {
