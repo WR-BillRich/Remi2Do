@@ -153,31 +153,29 @@ app.post('/api/v1/task', async (req, res) => {
     }
 });
 
-app.post('api/v1/task-complete/:taskId/username/:username', async(req, res) => {
+app.post('/api/v1/task-complete', async(req, res) => {
     try {
         const queryText =  `UPDATE  TRTask
-                            SET     COMPLETED_DATE = NOW()
+                            SET     COMPLETED_DATE = NOW(),
                                     COMPLETED_BY = $1
                             WHERE   TASK_ID = $2`;
         const query = {
             text: queryText,
-            values: [req.params.username,
-                    req.params.taskId]
+            values: [req.body.username,
+                    req.body.taskId]
         }
 
         const result = await client.query(query);
-        console.log('complete task: ', req.params.taskId);
+        console.log('complete task: ', req.body.taskId);
+        console.log(result);
         res.status(201);
-        res.send({
-            "message":"Task completed",
-            "taskId": req.params.taskId
-        });
+        res.send({"message":"Task Added"});
     } catch (err) {
         console.log(err);
         res.status(500);
         res.send(
             {
-                "message": "Complete Task Fail",
+                "message": err,
                 "error": err
             });
         throw err;

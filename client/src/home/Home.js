@@ -56,7 +56,10 @@ class Home extends React.Component{
                         
                         <div className="tab-content" id="myTabContent">
                         <div className="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
-                            <PendingTab refresh={this.state.refresh} />
+                            <PendingTab 
+                                refresh={this.state.refresh}
+                                handleRefresh = {this.handleRefresh}
+                             />
                         </div>
                         <div className="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
                             <CompletedTab refresh={this.state.refresh} />
@@ -298,6 +301,7 @@ class PendingTab extends React.Component {
         this.state = {
           taskList: []
         };
+        this.handleTaskClick = this.handleTaskClick.bind(this);
     }
     
     componentWillReceiveProps(props) {
@@ -316,6 +320,28 @@ class PendingTab extends React.Component {
                 taskList: response
             })
         )
+    }
+
+    handleTaskClick(taskId) {
+        const url = 'http://localhost:4000/api/v1/task-complete';
+        console.log({taskId});
+        fetch(url, {
+            method: 'POST',
+            body: JSON.stringify({
+                'taskId': taskId,
+                'username': 'ADMIN'
+            }),
+            headers: {"Content-Type": "application/json"}
+        })
+        .then(res => res.json())
+        .then(response => {
+            console.log(response.message);
+            this.props.handleRefresh();
+        })
+        .catch(error => {
+            console.log(error);
+            alert('Task complete fail');
+        });
     }
 
     render() {
@@ -347,7 +373,7 @@ class PendingTab extends React.Component {
                                         <span><b>{task.task_title}</b></span>
                                     </div>
                                     <div className="col ">
-                                        <a title="Mark as complete">
+                                        <a title="Mark as complete" onClick={e => this.handleTaskClick(task.task_id)}>
                                             <i  class="far fa-circle float-right" 
                                                 style={{"fontSize":"1.5rem"}}>
                                             </i>
